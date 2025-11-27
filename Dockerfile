@@ -24,6 +24,8 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # Copy nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# Internal port (nginx listens on 80)
+# External port will be mapped to 3006 in Coolify
 EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]
