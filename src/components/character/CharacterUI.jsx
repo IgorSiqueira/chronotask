@@ -1,4 +1,6 @@
 import { PHOTO_POSES, PHOTO_POSES_PT, UI_MODES, useCharacterStore } from "../../stores/characterStore";
+import { useState, useEffect } from "react";
+import { createCharacter, getUserCharacter } from "../../services/api";
 
 const PosesBox = () => {
   const curPose = useCharacterStore((state) => state.pose);
@@ -109,6 +111,214 @@ const AssetsBox = () => {
   );
 };
 
+const RPGStatsForm = () => {
+  const [name, setName] = useState("");
+  const [strength, setStrength] = useState(5);
+  const [defense, setDefense] = useState(5);
+  const [agility, setAgility] = useState(5);
+  const [intelligence, setIntelligence] = useState(5);
+  const [luck, setLuck] = useState(5);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
+  const [hasCharacter, setHasCharacter] = useState(false);
+  const [existingCharacter, setExistingCharacter] = useState(null);
+
+  // Verificar se usuário já possui personagem
+  useEffect(() => {
+    const checkExistingCharacter = async () => {
+      // Verificar se existe token
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        console.log("Token não encontrado no localStorage");
+        setError("Você precisa estar logado para criar um personagem");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await getUserCharacter();
+        console.log("Resposta da API getUserCharacter:", response);
+        console.log("Tipo da resposta:", typeof response);
+        console.log("Estrutura:", JSON.stringify(response, null, 2));
+
+        // A API retorna { characters: Array }
+        if (response && response.characters && response.characters.length > 0) {
+          const character = response.characters[0]; // Pegar o primeiro personagem
+          console.log("Personagem encontrado:", character.name);
+          setHasCharacter(true);
+          setExistingCharacter(character);
+          setName(character.name);
+          setStrength(character.strength || 5);
+          setDefense(character.defense || 5);
+          setAgility(character.agility || 5);
+          setIntelligence(character.intelligence || 5);
+          setLuck(character.luck || 5);
+        } else {
+          console.log("Nenhum personagem encontrado no array characters");
+        }
+      } catch (err) {
+        // Se retornar 404 ou erro, significa que não tem personagem
+        console.log("Erro ao buscar personagem:", err.response?.data || err.message);
+
+        // Se for erro de autenticação, mostrar mensagem
+        if (err.response?.status === 401) {
+          setError("Sessão expirada. Por favor, faça login novamente.");
+        }
+        // Se for 404, usuário não tem personagem ainda (ok)
+        else if (err.response?.status !== 404) {
+          console.error("Erro inesperado:", err);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkExistingCharacter();
+  }, []);
+
+  const handleSave = async () => {
+    if (!name.trim()) {
+      setError("Por favor, insira o nome do personagem");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setSuccess(false);
+
+    try {
+      const characterData = {
+        name: name.trim(),
+        strength: 5,
+        defense: 5,
+        agility: 5,
+        intelligence: 5,
+        luck: 5
+      };
+
+      await createCharacter(characterData);
+      setSuccess(true);
+      setHasCharacter(true);
+      setExistingCharacter(characterData);
+
+      // Limpar mensagem de sucesso após 3 segundos
+      setTimeout(() => {
+        setSuccess(false);
+      }, 3000);
+    } catch (err) {
+      console.error("Erro ao criar personagem:", err);
+      setError(err.response?.data?.message || "Erro ao salvar personagem. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Se está carregando
+  if (loading) {
+    return (
+      <div className="pointer-events-auto bg-gradient-to-br from-black/40 to-indigo-900/30 backdrop-blur-sm rounded-lg p-6 w-80 shadow-xl border border-white/10">
+        <div className="flex items-center justify-center h-40">
+          <p className="text-gray-300 animate-pulse">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="pointer-events-auto bg-gradient-to-br from-black/40 to-indigo-900/30 backdrop-blur-sm rounded-lg p-6 w-80 shadow-xl border border-white/10">
+      <h2 className="text-white text-xl font-bold mb-4 text-center">
+        {hasCharacter ? "Meu Personagem" : "Criar Personagem"}
+      </h2>
+
+      {/* Mensagens de erro/sucesso */}
+      {error && (
+        <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg">
+          <p className="text-red-200 text-sm text-center">{error}</p>
+        </div>
+      )}
+      {success && (
+        <div className="mb-4 p-3 bg-green-500/20 border border-green-500/50 rounded-lg">
+          <p className="text-green-200 text-sm text-center">✓ Personagem criado com sucesso!</p>
+        </div>
+      )}
+
+      {/* Nome do Personagem */}
+      <div className="mb-4">
+        <label className="block text-gray-200 text-sm font-medium mb-2">
+          Nome do Personagem
+        </label>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Digite o nome..."
+          className="w-full px-4 py-2 bg-black/30 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+          disabled={hasCharacter}
+        />
+      </div>
+
+      {/* Atributos RPG */}
+      <div className="space-y-3 mb-6">
+        <div className="flex items-center justify-between">
+          <label className="text-gray-200 text-sm font-medium flex items-center gap-2">
+            <span className="text-red-400">⚔️</span> Força
+          </label>
+          <span className="text-white font-bold text-lg bg-black/30 px-4 py-1 rounded-lg">{strength}</span>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <label className="text-gray-200 text-sm font-medium flex items-center gap-2">
+            <span className="text-blue-400">🛡️</span> Defesa
+          </label>
+          <span className="text-white font-bold text-lg bg-black/30 px-4 py-1 rounded-lg">{defense}</span>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <label className="text-gray-200 text-sm font-medium flex items-center gap-2">
+            <span className="text-green-400">⚡</span> Agilidade
+          </label>
+          <span className="text-white font-bold text-lg bg-black/30 px-4 py-1 rounded-lg">{agility}</span>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <label className="text-gray-200 text-sm font-medium flex items-center gap-2">
+            <span className="text-purple-400">🧠</span> Inteligência
+          </label>
+          <span className="text-white font-bold text-lg bg-black/30 px-4 py-1 rounded-lg">{intelligence}</span>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <label className="text-gray-200 text-sm font-medium flex items-center gap-2">
+            <span className="text-yellow-400">✨</span> Sorte
+          </label>
+          <span className="text-white font-bold text-lg bg-black/30 px-4 py-1 rounded-lg">{luck}</span>
+        </div>
+      </div>
+
+      {/* Botão Salvar - apenas no modo criação */}
+      {!hasCharacter && (
+        <button
+          onClick={handleSave}
+          disabled={loading}
+          className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold rounded-lg transition-all transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+        >
+          💾 Criar Personagem
+        </button>
+      )}
+
+      {/* Mensagem quando já possui personagem */}
+      {hasCharacter && (
+        <div className="text-center p-3 bg-indigo-500/20 border border-indigo-500/50 rounded-lg">
+          <p className="text-indigo-200 text-sm">
+            ✓ Personagem já criado
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const RandomizeButton = () => {
   const randomize = useCharacterStore((state) => state.randomize);
   return (
@@ -193,7 +403,11 @@ export const CharacterUI = () => {
         </div>
       </div>
       <div className="mx-auto h-full max-w-screen-xl w-full flex flex-col justify-between">
-        <div className="flex justify-end items-center p-10 pt-20">
+        <div className="flex justify-between items-start p-10 pt-20">
+          {/* Formulário RPG no lado esquerdo */}
+          <RPGStatsForm />
+
+          {/* Botões no lado direito */}
           <div className="flex items-center gap-2">
             <RandomizeButton />
             <ScreenshotButton />
