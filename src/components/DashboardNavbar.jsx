@@ -53,7 +53,7 @@ const DashboardNavbar = () => {
                         <div className="hidden md:flex space-x-4">
                             <Link
                                 to="/dashboard"
-                                className="px-3 py-2 rounded-lg text-indigo-400 bg-indigo-500/10 font-medium transition-colors"
+                                className="px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700/50 font-medium transition-colors"
                             >
                                 Dashboard
                             </Link>
@@ -64,13 +64,12 @@ const DashboardNavbar = () => {
                             >
                                 Hábitos
                             </button>
-                            <button
-                                disabled
-                                className="px-3 py-2 rounded-lg text-slate-500 cursor-not-allowed"
-                                title="Em desenvolvimento"
+                            <Link
+                                to="/character"
+                                className="px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700/50 font-medium transition-colors"
                             >
-                                Personagens
-                            </button>
+                                Personagem
+                            </Link>
                             <button
                                 disabled
                                 className="px-3 py-2 rounded-lg text-slate-500 cursor-not-allowed"

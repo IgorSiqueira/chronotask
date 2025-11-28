@@ -10,14 +10,20 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@gltf-transform/core": "^4.0.10",
+    "@gltf-transform/extensions": "^4.0.10",
+    "@gltf-transform/functions": "^4.0.10",
     "@hookform/resolvers": "^5.2.2",
+    "@react-spring/three": "^9.7.5",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.4.0",
+    "@react-three/postprocessing": "^2.16.3",
     "@tailwindcss/vite": "^4.1.17",
     "@types/three": "^0.181.0",
     "axios": "^1.13.2",
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.24",
+    "leva": "^0.9.35",
     "lucide-react": "^0.555.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
@@ -26,7 +32,9 @@
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.1.17",
     "three": "^0.181.2",
-    "zod": "^4.1.13"
+    "three-stdlib": "^2.33.0",
+    "zod": "^4.1.13",
+    "zustand": "^5.0.0-rc.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
