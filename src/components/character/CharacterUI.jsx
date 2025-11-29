@@ -1,6 +1,7 @@
 import { PHOTO_POSES, PHOTO_POSES_PT, UI_MODES, useCharacterStore } from "../../stores/characterStore";
 import { useState, useEffect } from "react";
 import { createCharacter, getUserCharacter } from "../../services/api";
+import { useNavigate } from "react-router-dom";
 
 const PosesBox = () => {
   const curPose = useCharacterStore((state) => state.pose);
@@ -112,6 +113,7 @@ const AssetsBox = () => {
 };
 
 const RPGStatsForm = () => {
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [strength, setStrength] = useState(5);
   const [defense, setDefense] = useState(5);
@@ -202,10 +204,15 @@ const RPGStatsForm = () => {
       setHasCharacter(true);
       setExistingCharacter(characterData);
 
-      // Limpar mensagem de sucesso após 3 segundos
+      // Salvar customização no localStorage (mock)
+      const customization = useCharacterStore.getState().customization;
+      localStorage.setItem('characterCustomization', JSON.stringify(customization));
+      localStorage.setItem('characterName', name.trim());
+
+      // Redirecionar para gameplay após 2 segundos
       setTimeout(() => {
-        setSuccess(false);
-      }, 3000);
+        navigate('/gameplay');
+      }, 2000);
     } catch (err) {
       console.error("Erro ao criar personagem:", err);
       setError(err.response?.data?.message || "Erro ao salvar personagem. Tente novamente.");
@@ -307,13 +314,14 @@ const RPGStatsForm = () => {
         </button>
       )}
 
-      {/* Mensagem quando já possui personagem */}
+      {/* Botão quando já possui personagem */}
       {hasCharacter && (
-        <div className="text-center p-3 bg-indigo-500/20 border border-indigo-500/50 rounded-lg">
-          <p className="text-indigo-200 text-sm">
-            ✓ Personagem já criado
-          </p>
-        </div>
+        <button
+          onClick={() => navigate('/gameplay')}
+          className="w-full py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-lg transition-all transform hover:scale-105 shadow-lg"
+        >
+          🎮 Ir para o Jogo
+        </button>
       )}
     </div>
   );
