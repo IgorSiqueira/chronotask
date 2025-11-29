@@ -24,6 +24,27 @@ api.interceptors.request.use(
     }
 );
 
+// Interceptor para tratar erros de autenticação
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401) {
+            // Token expirado ou inválido
+            console.log('Token expirado ou inválido, redirecionando para login...');
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('userEmail');
+            localStorage.removeItem('userFullName');
+            localStorage.removeItem('characterCustomization');
+
+            // Redirecionar para login
+            window.location.href = '/login';
+        }
+        return Promise.reject(error);
+    }
+);
+
 export const createUser = async (data) => {
     const response = await api.post('/user', data);
     return response.data;
