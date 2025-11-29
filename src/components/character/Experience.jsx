@@ -80,10 +80,21 @@ export const Experience = () => {
       <CameraManager loading={loading} />
       <Environment preset="sunset" environmentIntensity={0.3} />
 
+      {/* Ground plane - visible floor */}
       <mesh receiveShadow rotation-x={-Math.PI / 2} position-y={-0.31}>
-        <planeGeometry args={[100, 100]} />
-        <meshStandardMaterial color="#333" roughness={0.85} />
+        <planeGeometry args={[50, 50]} />
+        <meshStandardMaterial
+          color="#1a1a2e"
+          roughness={0.8}
+          metalness={0.2}
+        />
       </mesh>
+
+      {/* Grid lines for better depth perception */}
+      <gridHelper
+        args={[50, 50, "#4a5568", "#2d3748"]}
+        position-y={-0.3}
+      />
 
       <SoftShadows size={52} samples={16} focus={0.5} />
 
