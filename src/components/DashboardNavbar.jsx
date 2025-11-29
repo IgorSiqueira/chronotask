@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Gamepad2, ChevronDown } from 'lucide-react';
 
@@ -6,6 +6,7 @@ const DashboardNavbar = () => {
     const [user, setUser] = useState(null);
     const [showDropdown, setShowDropdown] = useState(false);
     const navigate = useNavigate();
+    const dropdownRef = useRef(null);
 
     useEffect(() => {
         const fullName = localStorage.getItem('userFullName');
@@ -16,13 +17,27 @@ const DashboardNavbar = () => {
         }
     }, []);
 
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setShowDropdown(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     const handleLogout = () => {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('userId');
         localStorage.removeItem('userEmail');
         localStorage.removeItem('userFullName');
-        navigate('/');
+        localStorage.removeItem('characterCustomization');
+        setShowDropdown(false);
+        navigate('/login');
     };
 
     const getInitials = (name) => {
@@ -81,7 +96,7 @@ const DashboardNavbar = () => {
                     </div>
 
                     {/* User Menu */}
-                    <div className="relative">
+                    <div className="relative" ref={dropdownRef}>
                         <button
                             onClick={() => setShowDropdown(!showDropdown)}
                             className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-slate-700/50 transition-colors"
