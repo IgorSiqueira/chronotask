@@ -5,6 +5,7 @@ import Register from './pages/Register';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Character from './pages/Character';
+import Gameplay from './pages/Gameplay';
 import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/character" element={<Character />} />
+            <Route path="/gameplay" element={<Gameplay />} />
           </Routes>
         </div>
       </BrowserRouter>
