@@ -65,4 +65,9 @@ export const getUserCharacter = async () => {
     return response.data;
 };
 
+export const getCharacterAttributes = async (characterId) => {
+    const response = await api.get(`/character/${characterId}/attribute`);
+    return response.data;
+};
+
 export default api;

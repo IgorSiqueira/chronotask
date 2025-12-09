@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
-import { getUserCharacter } from '../../services/api';
+import { getUserCharacter, getCharacterAttributes } from '../../services/api';
+import { getAttributeIcon } from '../../constants/attributeIcons';
 
 export const GameHUD = () => {
   const [userData, setUserData] = useState(null);
   const [characterData, setCharacterData] = useState(null);
+  const [attributes, setAttributes] = useState([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
@@ -25,6 +27,29 @@ export const GameHUD = () => {
           const character = response.characters[0];
           console.log('Character data:', character);
           setCharacterData(character);
+
+          // Load character attributes
+          try {
+            const attributesResponse = await getCharacterAttributes(character.id);
+            console.log('Attributes response:', attributesResponse);
+
+            // A resposta pode vir como array direto ou como { attributes: Array }
+            const attributesArray = Array.isArray(attributesResponse)
+              ? attributesResponse
+              : attributesResponse.attributes || [];
+
+            // Mapear atributos para formato { name, value }
+            const formattedAttributes = attributesArray.map(attr => ({
+              name: attr.name || attr.attribute_name || attr.attributeName || 'Atributo',
+              value: attr.value || attr.attribute_value || 0
+            }));
+
+            console.log('Formatted attributes:', formattedAttributes);
+            setAttributes(formattedAttributes);
+          } catch (attrError) {
+            console.error('Failed to load attributes:', attrError);
+            setAttributes([]);
+          }
         }
       } catch (error) {
         console.error('Failed to load character data:', error);
@@ -165,6 +190,20 @@ export const GameHUD = () => {
                   />
                 </div>
               </div>
+
+              {/* Atributos RPG - Renderização Dinâmica */}
+              {attributes.length > 0 && (
+                <div className="mt-2 pt-2 border-t border-white/10">
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                    {attributes.map((attr, index) => (
+                      <div key={index} className="flex items-center justify-between">
+                        <span className="text-slate-300">{getAttributeIcon(attr.name)} {attr.name.replace(/\(.*?\)/g, '').trim()}</span>
+                        <span className="text-white font-semibold">{attr.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

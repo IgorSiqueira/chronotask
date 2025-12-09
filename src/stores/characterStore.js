@@ -45,6 +45,8 @@ export const useCharacterStore = create((set, get) => ({
   lockedGroups: {},
   skin: new MeshStandardMaterial({ color: 0xf5c6a5, roughness: 1 }),
   customization: {},
+  attributes: [],
+  setAttributes: (attributes) => set({ attributes }),
   download: () => {},
   setDownload: (download) => set({ download }),
   screenshot: () => {},

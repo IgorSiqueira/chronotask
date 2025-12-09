@@ -1,7 +1,8 @@
 import { PHOTO_POSES, PHOTO_POSES_PT, UI_MODES, useCharacterStore } from "../../stores/characterStore";
 import { useState, useEffect } from "react";
-import { createCharacter, getUserCharacter } from "../../services/api";
+import { createCharacter, getUserCharacter, getCharacterAttributes } from "../../services/api";
 import { useNavigate } from "react-router-dom";
+import { getAttributeIcon } from "../../constants/attributeIcons";
 
 const PosesBox = () => {
   const curPose = useCharacterStore((state) => state.pose);
@@ -115,11 +116,7 @@ const AssetsBox = () => {
 const RPGStatsForm = () => {
   const navigate = useNavigate();
   const [name, setName] = useState("");
-  const [strength, setStrength] = useState(5);
-  const [defense, setDefense] = useState(5);
-  const [agility, setAgility] = useState(5);
-  const [intelligence, setIntelligence] = useState(5);
-  const [luck, setLuck] = useState(5);
+  const [attributes, setAttributes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
@@ -141,8 +138,6 @@ const RPGStatsForm = () => {
       try {
         const response = await getUserCharacter();
         console.log("Resposta da API getUserCharacter:", response);
-        console.log("Tipo da resposta:", typeof response);
-        console.log("Estrutura:", JSON.stringify(response, null, 2));
 
         // A API retorna { characters: Array }
         if (response && response.characters && response.characters.length > 0) {
@@ -151,11 +146,30 @@ const RPGStatsForm = () => {
           setHasCharacter(true);
           setExistingCharacter(character);
           setName(character.name);
-          setStrength(character.strength || 5);
-          setDefense(character.defense || 5);
-          setAgility(character.agility || 5);
-          setIntelligence(character.intelligence || 5);
-          setLuck(character.luck || 5);
+
+          // Buscar atributos do personagem existente
+          try {
+            const attributesResponse = await getCharacterAttributes(character.id);
+            console.log("Atributos da API:", attributesResponse);
+
+            // A resposta pode vir como array direto ou como { attributes: Array }
+            const attributesArray = Array.isArray(attributesResponse)
+              ? attributesResponse
+              : attributesResponse.attributes || [];
+
+            // Mapear atributos para formato { name, value }
+            const formattedAttributes = attributesArray.map(attr => ({
+              name: attr.name || attr.attribute_name || attr.attributeName || 'Atributo',
+              value: attr.value || attr.attribute_value || 0
+            }));
+
+            console.log("Atributos formatados:", formattedAttributes);
+            setAttributes(formattedAttributes);
+          } catch (attrError) {
+            console.error("Erro ao buscar atributos:", attrError);
+            // Se falhar, manter array vazio
+            setAttributes([]);
+          }
         } else {
           console.log("Nenhum personagem encontrado no array characters");
         }
@@ -191,18 +205,15 @@ const RPGStatsForm = () => {
 
     try {
       const characterData = {
-        name: name.trim(),
-        strength: 5,
-        defense: 5,
-        agility: 5,
-        intelligence: 5,
-        luck: 5
+        name: name.trim()
       };
 
-      await createCharacter(characterData);
+      const response = await createCharacter(characterData);
+      console.log("Personagem criado:", response);
+
       setSuccess(true);
       setHasCharacter(true);
-      setExistingCharacter(characterData);
+      setExistingCharacter(response.character || characterData);
 
       // Salvar customização no localStorage (mock)
       const customization = useCharacterStore.getState().customization;
@@ -265,43 +276,27 @@ const RPGStatsForm = () => {
         />
       </div>
 
-      {/* Atributos RPG */}
-      <div className="space-y-3 mb-6">
-        <div className="flex items-center justify-between">
-          <label className="text-gray-200 text-sm font-medium flex items-center gap-2">
-            <span className="text-red-400">⚔️</span> Força
-          </label>
-          <span className="text-white font-bold text-lg bg-black/30 px-4 py-1 rounded-lg">{strength}</span>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <label className="text-gray-200 text-sm font-medium flex items-center gap-2">
-            <span className="text-blue-400">🛡️</span> Defesa
-          </label>
-          <span className="text-white font-bold text-lg bg-black/30 px-4 py-1 rounded-lg">{defense}</span>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <label className="text-gray-200 text-sm font-medium flex items-center gap-2">
-            <span className="text-green-400">⚡</span> Agilidade
-          </label>
-          <span className="text-white font-bold text-lg bg-black/30 px-4 py-1 rounded-lg">{agility}</span>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <label className="text-gray-200 text-sm font-medium flex items-center gap-2">
-            <span className="text-purple-400">🧠</span> Inteligência
-          </label>
-          <span className="text-white font-bold text-lg bg-black/30 px-4 py-1 rounded-lg">{intelligence}</span>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <label className="text-gray-200 text-sm font-medium flex items-center gap-2">
-            <span className="text-yellow-400">✨</span> Sorte
-          </label>
-          <span className="text-white font-bold text-lg bg-black/30 px-4 py-1 rounded-lg">{luck}</span>
-        </div>
-      </div>
+      {/* Atributos RPG - Apenas quando personagem já existe */}
+      {hasCharacter && (
+        <>
+          {attributes.length > 0 ? (
+            <div className="space-y-3 mb-6">
+              {attributes.map((attr, index) => (
+                <div key={index} className="flex items-center justify-between">
+                  <label className="text-gray-200 text-sm font-medium flex items-center gap-2">
+                    <span>{getAttributeIcon(attr.name)}</span> {attr.name}
+                  </label>
+                  <span className="text-white font-bold text-lg bg-black/30 px-4 py-1 rounded-lg">{attr.value}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-3 mb-6">
+              <p className="text-gray-400 text-sm text-center italic">Carregando atributos...</p>
+            </div>
+          )}
+        </>
+      )}
 
       {/* Botão Salvar - apenas no modo criação */}
       {!hasCharacter && (
